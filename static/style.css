@@ -1,0 +1,10 @@
+/* Định dạng kích thước thẻ Card chính */
+.main-card {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Định dạng chiều cao thanh tiến trình upload */
+.upload-progress {
+    height: 25px;
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển File Nhanh</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', path='style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+    <div class="card shadow p-4 main-card">
+        <h3 class="text-center mb-4">Gửi File Lên Máy Tính</h3>
+        
+        <div id="uploadSection">
+            <input type="file" id="fileInput" class="form-control mb-3" accept=".jpg,.jpeg,.png,.mp4,.pdf,.docx,.txt,.text,.mp3,.mov" multiple>
+            <button id="uploadBtn" class="btn btn-primary w-100 mb-3" onclick="uploadFile()">Tải Lên</button>
+        </div>
+
+        <div class="progress d-none mb-3 upload-progress" id="progressContainer">
+            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;">0%</div>
+        </div>
+        
+        <div id="statusMessage" class="text-center fw-bold mb-3"></div>
+
+        <button id="resetBtn" class="btn btn-outline-primary w-100 d-none" onclick="resetForm()">Tải Thêm File Khác</button>
+    </div>
+
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+</body>
+</html>
