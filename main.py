@@ -1,4 +1,5 @@
 import os
+import logging
 import threading
 import tkinter as tk
 import socket
@@ -35,7 +36,16 @@ def is_port_free(port):
 
 # --- HÀM CHẠY SERVER BACKEND ---
 def run_fastapi_server(host, port):
-    uvicorn.run(app, host=host, port=port, log_level="warning")
+# Tắt hoàn toàn log của uvicorn để không gây xung đột với GUI
+    logging.getLogger("uvicorn.access").handlers = []
+    logging.getLogger("uvicorn.error").handlers = []
+    
+    # Ép luồng xuất dữ liệu về null nếu chạy dưới dạng .exe
+    if getattr(sys, 'frozen', False):
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+        
+    uvicorn.run(app, host=host, port=port, log_level="critical")
 
 # --- HÀM XỬ LÝ KHI ĐÓNG CỬA SỔ ---
 def on_closing(root):
