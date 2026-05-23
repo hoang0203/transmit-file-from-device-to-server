@@ -2,6 +2,7 @@ import os
 import threading
 import tkinter as tk
 import socket
+import sys
 
 import qrcode
 import uvicorn
@@ -89,7 +90,21 @@ def show_qr_interface(root, port):
 def create_gui():
     root = tk.Tk()
     root.title("Transmit files - v1")
-    
+    # --- CÁCH THIẾT LẬP ICON ---
+    def resource_path(relative_path):
+        """ Lấy đường dẫn tuyệt đối tới tài nguyên, hoạt động cho cả khi chạy script và đã build exe """
+        try:
+            # PyInstaller tạo một thư mục tạm và lưu đường dẫn trong _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        return os.path.join(base_path, relative_path)
+
+    # Đặt icon (đảm bảo file appIcon.ico nằm cùng thư mục với main.py khi develop)
+    icon_path = resource_path("appIcon.ico")
+    if os.path.exists(icon_path):
+        root.iconbitmap(icon_path)
+        
     # --- ĐOẠN CODE CĂN GIỮA MÀN HÌNH ---
     window_width = 500
     window_height = 600
