@@ -1,3 +1,97 @@
+// Dùng DataTransfer để lưu trữ và quản lý danh sách file có thể thêm/xóa
+let dataTransfer = new DataTransfer();
+
+// Kích hoạt thẻ input ẩn
+function triggerFileInput() {
+    document.getElementById('fileInput').click();
+}
+
+// Bắt sự kiện khi người dùng chọn file
+document.addEventListener("DOMContentLoaded", function() {
+    const fileInput = document.getElementById('fileInput');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            // Khi chọn file mới, ta thay thế danh sách cũ bằng danh sách mới
+            dataTransfer = new DataTransfer(); 
+            for (let i = 0; i < fileInput.files.length; i++) {
+                dataTransfer.items.add(fileInput.files[i]);
+            }
+            updateFileListUI();
+        });
+    }
+});
+
+// Hàm Xóa 1 file khỏi danh sách dựa trên vị trí (index)
+function removeFile(index) {
+    const fileInput = document.getElementById('fileInput');
+    const newDataTransfer = new DataTransfer();
+    
+    // Copy tất cả file sang danh sách mới, NGOẠI TRỪ file bị xóa
+    for (let i = 0; i < dataTransfer.files.length; i++) {
+        if (i !== index) {
+            newDataTransfer.items.add(dataTransfer.files[i]);
+        }
+    }
+    
+    dataTransfer = newDataTransfer; // Cập nhật lại biến toàn cục
+    fileInput.files = dataTransfer.files; // Gắn lại vào thẻ input thật
+    updateFileListUI(); // Vẽ lại giao diện
+}
+
+// Hàm vẽ danh sách file ra HTML và quản lý nút Tải Lên
+function updateFileListUI() {
+    const listContainer = document.getElementById('fileListContainer');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const files = dataTransfer.files;
+    
+    // Lấy danh sách đuôi file hợp lệ từ thuộc tính accept của input
+    const allowedExtensions = fileInput.getAttribute('accept').split(',').map(ext => ext.trim().toLowerCase());
+    
+    listContainer.innerHTML = ''; 
+
+    if (files.length === 0) {
+        listContainer.innerHTML = '<div class="text-muted small text-center mt-4">Chưa có file nào</div>';
+        uploadBtn.disabled = true;
+        return;
+    }
+
+    let hasInvalidFile = false; // Cờ kiểm tra xem có file nào lỗi không
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileName = file.name;
+        const fileExt = "." + fileName.split('.').pop().toLowerCase();
+        
+        // Kiểm tra tính hợp lệ
+        const isValid = allowedExtensions.includes(fileExt);
+        if (!isValid) hasInvalidFile = true;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'file-item';
+        
+        // Icon báo hiệu: 🟢 hợp lệ, 🔴 không hợp lệ
+        const statusIcon = isValid ? "✅" : "⚠️";
+
+        itemDiv.innerHTML = `
+            <span>${statusIcon} ${fileName.length > 20 ? fileName.substring(0, 15) + "..." : fileName}</span>
+            <button type="button" class="remove-btn" onclick="removeFile(${i})">&times;</button>
+        `;
+        listContainer.appendChild(itemDiv);
+    }
+
+    // Nếu có file không hợp lệ, khóa nút Tải Lên
+    uploadBtn.disabled = hasInvalidFile;
+    
+    if (hasInvalidFile) {
+        // Có thể thêm cảnh báo nhỏ cho người dùng
+        listContainer.insertAdjacentHTML('afterbegin', 
+            '<div class="text-danger small text-center p-1">⚠️ Có file không được hỗ trợ!</div>');
+    }
+}
+
+// --- HÀM TẢI LÊN GIỮ NGUYÊN HOÀN TOÀN CỦA BẠN ---
 function uploadFile() {
     const fileInput = document.getElementById('fileInput');
     const files = fileInput.files;
@@ -12,11 +106,9 @@ function uploadFile() {
         return;
     }
 
-    // 1. LẤY TOKEN TỪ URL HIỆN TẠI
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
-    // Chuẩn bị form data
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
         formData.append("files", files[i]);
@@ -27,9 +119,6 @@ function uploadFile() {
     statusMessage.innerHTML = "Đang tải lên...";
 
     const xhr = new XMLHttpRequest();
-    
-    // 2. GẮN TOKEN VÀO URL KHI GỬI REQUEST
-    // Thay vì open("POST", "/upload", true), hãy dùng:
     xhr.open("POST", "/upload?token=" + encodeURIComponent(token), true);
 
     xhr.upload.onprogress = function(event) {
@@ -57,22 +146,20 @@ function uploadFile() {
     xhr.send(formData);
 }
 
-// Hàm reset lại giao diện như lúc mới mở web
+// --- RESET LẠI GIAO DIỆN CHUẨN XÁC ---
 function resetForm() {
-    // Xóa file cũ trong thẻ input
     document.getElementById('fileInput').value = "";
-    
-    // Hiện lại khu vực chọn file và tải lên
+    dataTransfer = new DataTransfer(); // Reset biến quản lý file
+    updateFileListUI(); // Reset UI danh sách
+
     document.getElementById('uploadSection').classList.remove('d-none');
     
-    // Ẩn và reset thanh tiến trình
     document.getElementById('progressContainer').classList.add('d-none');
     const progressBar = document.getElementById('progressBar');
     progressBar.style.width = "0%";
     progressBar.innerText = "0%";
     progressBar.classList.remove('bg-success');
     
-    // Xóa tin nhắn trạng thái và ẩn chính nút "Tải Thêm"
     document.getElementById('statusMessage').innerHTML = "";
     document.getElementById('resetBtn').classList.add('d-none');
 }

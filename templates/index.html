@@ -11,18 +11,29 @@
     <div class="card shadow p-4 main-card">
         <h3 class="text-center mb-4">Gửi File Lên Máy Tính</h3>
         
-        <div id="uploadSection">
-            <input type="file" id="fileInput" class="form-control mb-3" accept=".jpg,.jpeg,.png,.mp4,.pdf,.docx,.txt,.text,.mp3,.mov" multiple>
-            <button id="uploadBtn" class="btn btn-primary w-100 mb-3" onclick="uploadFile()">Tải Lên</button>
+        <div id="uploadSection" class="row">
+            <div class="col-sm-5 d-flex flex-column justify-content-center mb-3 mb-sm-0">
+                <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.mp4,.pdf,.docx,.txt,.text,.mp3,.mov" multiple>
+                
+                <button type="button" id="selectFileBtn" class="btn btn-outline-secondary w-100 mb-3" style="height: 50px; font-weight: 500;" onclick="triggerFileInput()">📁 Chọn File</button>
+                <button id="uploadBtn" class="btn btn-primary w-100" style="height: 50px; font-weight: 500;" onclick="uploadFile()" disabled>Tải Lên</button>
+            </div>
+            
+            <div class="col-sm-7">
+                <p class="mb-1 fw-bold text-center text-sm-start text-dark" style="font-size: 14px;">Danh sách tệp</p>
+                <div id="fileListContainer" class="border rounded file-list-scroll p-1">
+                    <div class="text-muted small text-center mt-4">Chưa có file nào</div>
+                </div>
+            </div>
         </div>
 
-        <div class="progress d-none mb-3 upload-progress" id="progressContainer">
+        <div class="progress d-none mt-4 mb-3 upload-progress" id="progressContainer">
             <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;">0%</div>
         </div>
         
-        <div id="statusMessage" class="text-center fw-bold mb-3"></div>
+        <div id="statusMessage" class="text-center fw-bold mt-2"></div>
 
-        <button id="resetBtn" class="btn btn-outline-primary w-100 d-none" onclick="resetForm()">Tải Thêm File Khác</button>
+        <button id="resetBtn" class="btn btn-outline-primary w-100 d-none mt-3" onclick="resetForm()">Tải Thêm File Khác</button>
     </div>
 
     <script src="{{ url_for('static', path='script.js') }}"></script>
