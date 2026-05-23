@@ -47,18 +47,19 @@ def show_qr_interface(root, port):
     LOCAL_IP = get_local_ip()
     TOKEN = get_session_token() # Lấy token từ api.py
     SERVER_URL = f"http://{LOCAL_IP}:{port}/?token={TOKEN}"
-    upload_dir = os.path.join(os.getcwd(), "uploads")
+    
+    # Tạo biến lưu đường dẫn tuyệt đối đến thư mục uploads
+    upload_dir = os.path.abspath(os.path.join(os.getcwd(), "uploads"))
 
     threading.Thread(target=run_fastapi_server, args=("0.0.0.0", port), daemon=True).start()
 
     main_frame = tk.Frame(root, bg="#e0e0e0", bd=2, relief=tk.GROOVE)
     main_frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
-
-    tk.Label(main_frame, text="Transmit files - v1", font=("Arial", 12, "bold"), bg="#e0e0e0", anchor="w").pack(fill=tk.X, padx=10, pady=(10, 0))
+    
     tk.Label(main_frame, text="Quét mã QR để vào web:", font=("Arial", 14, "bold"), bg="#e0e0e0").pack(pady=(20, 10))
 
     try:
-        qr = qrcode.QRCode(version=1, box_size=8, border=2)
+        qr = qrcode.QRCode(version=1, box_size=6, border=2)
         qr.add_data(SERVER_URL)
         qr.make(fit=True)
         qr_img = qr.make_image(fill_color="black", back_color="white")
@@ -69,14 +70,42 @@ def show_qr_interface(root, port):
     except Exception as e:
         tk.Label(main_frame, text=f"Lỗi tạo QR: {e}", fg="red").pack()
 
-    tk.Label(main_frame, text=f"Truy cập: {SERVER_URL}", font=("Arial", 10), bg="#e0e0e0", fg="blue").pack(pady=5)
+    tk.Label(main_frame, text=f"""Truy cập:"""
+             , font=("Arial", 10), bg="#e0e0e0", fg="blue").pack(pady=5)
+    tk.Label(main_frame, text=f"""{SERVER_URL}"""
+             , font=("Arial", 10), bg="#e0e0e0", fg="blue").pack(pady=5)
     tk.Label(main_frame, text="Lưu ý: Nếu Firewall hiện lên, hãy chọn 'Allow access'.", font=("Arial", 8, "italic"), bg="#e0e0e0", fg="red").pack(pady=5)
+
+    # --- ĐOẠN MÃ THÊM MỚI: HIỂN THỊ ĐƯỜNG DẪN THƯ MỤC UPLOADS ---
+    tk.Label(main_frame, text="Thư mục lưu file (Bôi đen để Copy):", font=("Arial", 10, "bold"), bg="#e0e0e0", fg="#333").pack(pady=(15, 5))
+    
+    # Dùng tk.Entry để người dùng có thể bôi đen và copy
+    path_entry = tk.Entry(main_frame, font=("Arial", 10), justify="center")
+    path_entry.insert(0, upload_dir)
+    path_entry.config(state="readonly") # Đặt chỉ đọc để người dùng không vô tình xóa mất text
+    path_entry.pack(fill=tk.X, padx=30, pady=(0, 10))
 
 # --- MÀN HÌNH CHỌN CỔNG (BƯỚC 1) ---
 def create_gui():
     root = tk.Tk()
     root.title("Transmit files - v1")
-    root.geometry("500x550")
+    
+    # --- ĐOẠN CODE CĂN GIỮA MÀN HÌNH ---
+    window_width = 500
+    window_height = 600
+    
+    # Lấy kích thước của màn hình máy tính
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
+    # Tính toán tọa độ x, y để đặt cửa sổ vào giữa
+    center_x = int(screen_width / 2 - window_width / 2)
+    center_y = int(screen_height / 2 - window_height / 2)
+    
+    # Đặt kích thước và vị trí xuất hiện (format: widthxheight+x+y)
+    root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+    # -----------------------------------
+
     root.configure(bg="#e0e0e0")
 
     # Gán hàm on_closing vào sự kiện đóng cửa sổ

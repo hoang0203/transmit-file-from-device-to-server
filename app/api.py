@@ -15,7 +15,6 @@ from fastapi.staticfiles import StaticFiles
 
 # --- TẠO TOKEN NGẪU NHIÊN KHI KHỞI ĐỘNG APP ---
 SESSION_TOKEN = uuid.uuid4().hex
-print(f"[*] Đường dẫn truy cập: http://<IP>:PORT/?token={SESSION_TOKEN}")
 
 # Thêm đoạn code này để xác định đúng đường dẫn thực tế
 if getattr(sys, 'frozen', False):
