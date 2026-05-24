@@ -1,4 +1,5 @@
 import os
+import json
 import uuid
 import re
 import sys
@@ -8,13 +9,31 @@ from pathlib import Path
 from typing import List
 
 from fastapi import FastAPI, File, UploadFile, Request, HTTPException, Depends
-from fastapi.security import APIKeyQuery
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 # --- TẠO TOKEN NGẪU NHIÊN KHI KHỞI ĐỘNG APP ---
 SESSION_TOKEN = uuid.uuid4().hex
+CONFIG_FILE = "config.json"
+DEFAULT_UPLOAD_DIR = Path(os.getcwd()) / "uploads"
+
+def get_upload_dir():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                config = json.load(f)
+                custom_path = config.get("upload_path")
+                if custom_path:
+                    path = Path(custom_path)
+                    path.mkdir(parents=True, exist_ok=True)
+                    return path
+        except Exception as e:
+            print(f"Lỗi đọc file config, sử dụng mặc định: {e}")
+    
+    # Nếu không có file config hoặc lỗi, dùng mặc định
+    DEFAULT_UPLOAD_DIR.mkdir(exist_ok=True)
+    return DEFAULT_UPLOAD_DIR
 
 # Thêm đoạn code này để xác định đúng đường dẫn thực tế
 if getattr(sys, 'frozen', False):
@@ -39,8 +58,6 @@ templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 # Cấu hình phục vụ file tĩnh CSS, JS (Hỗ trợ tốt cả khi đóng gói .exe)
 STATIC_DIR = base_dir / "static"            # <-- THÊM DÒNG NÀY
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static") # <-- THÊM DÒNG NÀY
-UPLOAD_DIR = Path(os.getcwd()) / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".mp4", ".pdf", ".docx", ".text", ".txt", ".mp3", ".mov"}
 
 def sanitize_filename(name: str) -> str:
@@ -52,13 +69,14 @@ async def serve_frontend(request: Request, token: str = Depends(verify_token)):
 
 @app.post("/upload")
 async def upload_file(files: List[UploadFile] = File(...), token: str = Depends(verify_token)):
+    upload_dir = get_upload_dir()  # Lấy đường dẫn upload mới nhất mỗi khi có request
     results = []
     for file in files:
         file_ext = os.path.splitext(file.filename)[1].lower()
         if file_ext not in ALLOWED_EXTENSIONS: continue
         
         safe_filename = f"{os.path.splitext(sanitize_filename(file.filename))[0]}_{uuid.uuid4().hex[:6]}{file_ext}"
-        file_path = UPLOAD_DIR / safe_filename
+        file_path = upload_dir / safe_filename
         
         with open(file_path, "wb") as buffer:
             while chunk := await file.read(1024 * 1024):
