@@ -219,7 +219,7 @@ def create_gui():
                 messagebox.showerror("Lỗi", f"Không thể lưu file config: {e}")
 
     # Nút icon folder
-    btn_folder = tk.Button(folder_label_frame, text="📁", font=("Arial", 12), bd=0, bg="#e0e0e0", cursor="hand2", command=choose_folder)
+    btn_folder = tk.Button(folder_label_frame, text="(chọn thư mục*)", font=("Arial", 10), bg="#4caf50", fg="white", cursor="hand2", command=choose_folder)
     btn_folder.pack(side=tk.LEFT, padx=(5, 0))
 
     # Ô hiển thị đường dẫn đã chọn (Readonly)
