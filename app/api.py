@@ -3,7 +3,7 @@ import json
 import uuid
 import re
 import sys
-
+import unicodedata
 
 from pathlib import Path
 from typing import List
@@ -13,36 +13,34 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+# --- XÁC ĐỊNH BASE_DIR AN TOÀN TRƯỚC ---
+if getattr(sys, 'frozen', False):
+    base_dir = Path(sys._MEIPASS).resolve()
+else:
+    base_dir = Path(__file__).resolve().parent.parent
+
 # --- TẠO TOKEN NGẪU NHIÊN KHI KHỞI ĐỘNG APP ---
 SESSION_TOKEN = uuid.uuid4().hex
-CONFIG_FILE = "config.json"
-DEFAULT_UPLOAD_DIR = Path(os.getcwd()) / "uploads"
+CONFIG_FILE = str(base_dir / "config.json") # Đảm bảo đường dẫn file config là tuyệt đối
 
 def get_upload_dir():
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, "r") as f:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 config = json.load(f)
                 custom_path = config.get("upload_path")
                 if custom_path:
-                    path = Path(custom_path)
+                    path = Path(custom_path).resolve()
                     path.mkdir(parents=True, exist_ok=True)
                     return path
         except Exception as e:
             print(f"Lỗi đọc file config, sử dụng mặc định: {e}")
     
     # Nếu không có file config hoặc lỗi, dùng mặc định
-    DEFAULT_UPLOAD_DIR.mkdir(exist_ok=True)
-    return DEFAULT_UPLOAD_DIR
+    default_dir = base_dir / "uploads"
+    default_dir.mkdir(parents=True, exist_ok=True)
+    return default_dir
 
-# Thêm đoạn code này để xác định đúng đường dẫn thực tế
-if getattr(sys, 'frozen', False):
-    # Đang chạy dưới dạng file .exe
-    base_dir = Path(sys._MEIPASS)
-else:
-    # Đang chạy file script Python bình thường
-    base_dir = Path(os.getcwd())
-    
 # Khởi tạo App
 app = FastAPI()
 
@@ -55,12 +53,16 @@ async def verify_token(token: str = None):
 # Cấu hình templates (lưu ý đường dẫn ở đây nếu đóng gói .exe)
 TEMPLATE_DIR = base_dir / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
+
 # Cấu hình phục vụ file tĩnh CSS, JS (Hỗ trợ tốt cả khi đóng gói .exe)
-STATIC_DIR = base_dir / "static"            # <-- THÊM DÒNG NÀY
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static") # <-- THÊM DÒNG NÀY
+STATIC_DIR = base_dir / "static"
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".mp4", ".pdf", ".docx", ".text", ".txt", ".mp3", ".mov"}
 
 def sanitize_filename(name: str) -> str:
+    """Loại bỏ các ký tự không hợp lệ và chuẩn hóa tên file"""
+    name = unicodedata.normalize('NFC', name)
     return re.sub(r'[\\/*?:"<>|]', "", name)
 
 @app.get("/", response_class=HTMLResponse)
