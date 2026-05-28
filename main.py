@@ -16,6 +16,16 @@ from PIL import Image, ImageTk
 
 from app.api import app, get_session_token
 
+base_dir = os.path.abspath(os.path.dirname(__file__))
+LOG_FILE = os.path.join(base_dir, "app.log")
+logging.basicConfig(
+    filename=LOG_FILE,
+    encoding="utf-8",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+
 # --- HÀM LẤY IP LOCAL ---
 def get_local_ip():
     try:
@@ -61,20 +71,23 @@ def show_qr_interface(root, port):
     SERVER_URL = f"http://{LOCAL_IP}:{port}/?token={TOKEN}"
     
     # Tạo biến lưu đường dẫn tuyệt đối đến thư mục uploads
-    if os.path.exists("config.json"):
+    if os.path.exists(os.path.join(base_dir, "config.json")):
         try:
-            with open("config.json", "r", encoding="utf-8") as f:
+            with open(os.path.join(base_dir, "config.json"), "r", encoding="utf-8") as f:
                 config = json.load(f)
                 custom_path = config.get("upload_path")
                 if custom_path:
                     upload_dir = os.path.abspath(custom_path)
                 else:
-                    upload_dir = os.path.abspath(os.path.join(os.getcwd(), "uploads"))
+                    upload_dir = os.path.abspath(os.path.join(base_dir, "uploads"))
+            logging.info(f"Đường dẫn upload được lấy từ config: {upload_dir}")
         except Exception as e:
-            print(f"Lỗi đọc file config, sử dụng mặc định: {e}")
-            upload_dir = os.path.abspath(os.path.join(os.getcwd(), "uploads"))
+            logging.error(f"Lỗi đọc file config: {e}")
+            upload_dir = os.path.abspath(os.path.join(base_dir, "uploads"))
     else:
-        upload_dir = os.path.abspath(os.path.join(os.getcwd(), "uploads"))
+        upload_dir = os.path.abspath(os.path.join(base_dir, "uploads"))
+        base = os.path.join(base_dir, "config.json")
+        logging.info(f"Không tìm thấy file config {base}")
 
     threading.Thread(target=run_fastapi_server, args=("0.0.0.0", port), daemon=True).start()
 
@@ -181,15 +194,15 @@ def create_gui():
     # 2. KHU VỰC CHỌN THƯ MỤC
     # Đọc config.json nếu có
     initial_path = ""
-    if os.path.exists("config.json"):
+    if os.path.exists(os.path.join(base_dir, "config.json")):
         try:
-            with open("config.json", "r", encoding="utf-8") as f:
+            with open(os.path.join(base_dir, "config.json"), "r", encoding="utf-8") as f:
                 config = json.load(f)
                 initial_path = config.get("upload_path", "")
         except Exception:
             pass
     else:
-        initial_path = os.path.abspath(os.path.join(os.getcwd(), "uploads"))
+        initial_path = os.path.abspath(os.path.join(base_dir, "uploads"))
 
     # Frame chứa Label và Nút Folder Icon
     folder_label_frame = tk.Frame(port_frame, bg="#e0e0e0")
@@ -212,7 +225,7 @@ def create_gui():
             
             # Lưu vào config.json
             try:
-                with open("config.json", "w", encoding="utf-8") as f:
+                with open(os.path.join(base_dir, "config.json"), "w", encoding="utf-8") as f:
                     # ensure_ascii=False để không bị lỗi font nếu đường dẫn có tiếng Việt
                     json.dump({"upload_path": selected_dir}, f, indent=4, ensure_ascii=False)
             except Exception as e:
@@ -232,3 +245,4 @@ def create_gui():
 
 if __name__ == "__main__":
     create_gui()
+    
